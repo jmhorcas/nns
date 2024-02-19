@@ -10,8 +10,9 @@ from language_constructs.models import LanguageConstruct
 
 class FMLanguage():
 
-    def __init__(self, lcs: list[LanguageConstruct]) -> None:
+    def __init__(self, lcs: list[LanguageConstruct], optional_lcs: list[LanguageConstruct]) -> None:
         self.lcs = lcs
+        self.optional_lcs = optional_lcs
 
     def generate_feature_models(self, features_names: set[str]) -> list[FeatureModel]:
         incomplete_feature_models = queue.Queue()
@@ -47,6 +48,11 @@ class FMLanguage():
                 print(f'FM{count}: {fm}')
                 output_file = os.path.join(output_folder, f'fm{count}_{len(fm.get_features())}f_{len(fm.get_constraints())}c.uvl')
                 UVLWriter(fm, output_file).transform()
+                for olc in self.optional_lcs:
+                    applicable_lcs.extend(olc.get_applicable_instances(fm, features_names))
+                for alc in applicable_lcs:
+                    new_fm = copy.deepcopy(fm)
+                    incomplete_feature_models.put(alc.apply(new_fm))
             else:
                 for alc in applicable_lcs:
                     new_fm = copy.deepcopy(fm)

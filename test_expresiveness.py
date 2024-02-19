@@ -18,8 +18,7 @@ from language_constructs.models.constructs import (
 )
 
 
-MAX_FEATURES_WITH_CONSTRAINTS = 2
-MAX_FEATURES_WITHOUT_CONSTRAINTS = 1
+MAX_FEATURES = 3
 OUTPUT_FOLDER = 'generated'
 
 
@@ -27,9 +26,11 @@ if __name__ == "__main__":
     if not os.path.exists(OUTPUT_FOLDER):
         os.makedirs(OUTPUT_FOLDER)
 
-    features_names = [f'F{i}' for i in range(1, MAX_FEATURES_WITH_CONSTRAINTS + 1)]
-    language_constructs = [FeatureModelConstruct, RootFeature, OptionalFeature, MandatoryFeature, XorGroup, OrGroup, XorChildFeature, OrChildFeature, RequiresConstraint, ExcludesConstraint]
-    language = FMLanguage(language_constructs)
+    features_names = [f'F{i}' for i in range(1, MAX_FEATURES + 1)]
+    language_constructs = [FeatureModelConstruct, RootFeature, OptionalFeature, MandatoryFeature, XorGroup, OrGroup, XorChildFeature, OrChildFeature]
+    optional_language_constructs = [RequiresConstraint, ExcludesConstraint]
+    #optional_language_constructs = []
+    language = FMLanguage(language_constructs, optional_language_constructs)
     #fms = language.generate_feature_models(features_names)
     # for i, fm in enumerate(fms, 1):
     #     print(f'FM{i}: {fm}')
