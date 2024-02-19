@@ -35,7 +35,7 @@ class FMLanguage():
                                                 output_folder: str) -> int:
         incomplete_feature_models = queue.Queue()
         incomplete_feature_models.put(None)
-        count = 1
+        count = 0
         while not incomplete_feature_models.empty():
             print(f'#Completed/Incompleted fms: {count} / {incomplete_feature_models.qsize()}')
             fm = incomplete_feature_models.get()
@@ -43,10 +43,10 @@ class FMLanguage():
             for lc in self.lcs:
                 applicable_lcs.extend(lc.get_applicable_instances(fm, features_names))
             if not applicable_lcs:
+                count += 1
                 print(f'FM{count}: {fm}')
                 output_file = os.path.join(output_folder, f'fm{count}_{len(fm.get_features())}f_{len(fm.get_constraints())}c.uvl')
                 UVLWriter(fm, output_file).transform()
-                count += 1
             else:
                 for alc in applicable_lcs:
                     new_fm = copy.deepcopy(fm)

@@ -34,11 +34,11 @@ class ExcludesConstraint(LanguageConstruct):
         return fm
 
     def is_applicable(self, fm: FeatureModel) -> bool:
-        if fm is None:
+        if fm is None or len(fm.get_features()) < 2:
             return False
         left_feature = fm.get_feature_by_name(self.left_feature_name)
         right_feature = fm.get_feature_by_name(self.right_feature_name)
-        if left_feature is None or right_feature is not None:
+        if left_feature is None or right_feature is None:
             return False
         return not any(ctc.is_excludes_constraint() and 
                        utils.left_right_features_from_simple_constraint(ctc) == (self.left_feature_name, self.right_feature_name) 
@@ -46,7 +46,7 @@ class ExcludesConstraint(LanguageConstruct):
 
     @staticmethod
     def get_applicable_instances(fm: FeatureModel, features_names: list[str]) -> list['LanguageConstruct']:
-        if fm is None:
+        if fm is None or len(fm.get_features()) < 2:
             return []
         lcs = []
         features_combinations = itertools.combinations(features_names, 2)
