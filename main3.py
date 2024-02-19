@@ -64,17 +64,34 @@ def predict_value(model: Any, input: numpy.ndarray[Any]) -> numpy.ndarray[Any]:
 
 def main():
     # Examples: A pair of inputs/outputs used during training. 
-    celsius_q    = numpy.array([-40, -10,  0,  8, 15, 22,  38],  dtype=float)
-    fahrenheit_a = numpy.array([-40,  14, 32, 46, 59, 72, 100],  dtype=float)
+    fms_xor = [
+        [[1], [1, -2], [1 -3], [2, 3, -1], [-2 -3]],
+        [[1], [1, -2], [1 -3], [1, -4], [2, 3, 4, -1], [-2, -3], [-2, -4], [-3, -4]],
+        [[1], [1, -2], [1 -3], [1, -4], [1, -5], [2, 3, 4, 5, -1], [-2, -3], [-2, -4], [-2, -5], [-3, -4], [-3, -5], [-4, -5]],
+    ]
+    fms_configs = [[2], [3], [4]]
 
-    for i,c in enumerate(celsius_q):
-        print("{} degrees Celsius = {} degrees Fahrenheit".format(c, fahrenheit_a[i]))
+    print(f'#Max: {max(len(clause) for model in fms_xor for clause in model)}')
 
-    nn_model = create_nn_model()
-    history = train_nn_model(nn_model, celsius_q, fahrenheit_a)
-    display_training_statistis(history)
-    result = predict_value(nn_model, [100.0])
-    print(result)
+    input = numpy.array(fms_xor,  dtype=int)
+    output = numpy.array(fms_configs,  dtype=int)
+    
+    # Build the layers
+    #l0 = tensorflow.keras.layers.Dense(units=L0_N_NEURONS, input_shape=(2,)) 
+
+    # Assemble layers into the model
+    #model = tensorflow.keras.Sequential([l0])
+
+    # Compile the model, with loss and optimizer functions
+    #model.compile(loss=LOSS_FUNCTION, optimizer=OPTIMIZER_FUNCTION)
+
+    # Train the model
+    #history = model.fit(input, output, epochs=EPOCHS, verbose=False)
+
+    # Predict value
+    #result = model.predict(input)
+
+    #print(result)
 
 
 if __name__ == '__main__':

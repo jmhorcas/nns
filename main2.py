@@ -64,16 +64,21 @@ def predict_value(model: Any, input: numpy.ndarray[Any]) -> numpy.ndarray[Any]:
 
 def main():
     # Examples: A pair of inputs/outputs used during training. 
-    celsius_q    = numpy.array([-40, -10,  0,  8, 15, 22,  38],  dtype=float)
-    fahrenheit_a = numpy.array([-40,  14, 32, 46, 59, 72, 100],  dtype=float)
+    fms_xor = [
+        [[1], [1, -2], [1 -3], [2, 3, -1], [-2 -3]],
+        [[1], [1, -2], [1 -3], [1, -4], [2, 3, 4, -1], [-2, -3], [-2, -4], [-3, -4]],
+        [[1], [1, -2], [1 -3], [1, -4], [1, -5], [2, 3, 4, 5, -1], [-2, -3], [-2, -4], [-2, -5], [-3, -4], [-3, -5], [-4, -5]],
+    ]
+    fms_configs = [[2], [3], [4]]
 
-    for i,c in enumerate(celsius_q):
-        print("{} degrees Celsius = {} degrees Fahrenheit".format(c, fahrenheit_a[i]))
+
+    inputs = tensorflow.ragged.constant(fms_xor).to_tensor()
+    outputs = tensorflow.ragged.constant(fms_configs)
 
     nn_model = create_nn_model()
-    history = train_nn_model(nn_model, celsius_q, fahrenheit_a)
+    history = train_nn_model(nn_model, inputs, outputs)
     display_training_statistis(history)
-    result = predict_value(nn_model, [100.0])
+    result = predict_value(nn_model, [[1], [1, -2], [1 -3], [1, -4], [2, 3, 4, -1], [-2, -3], [-2, -4], [-3, -4]],)
     print(result)
 
 
