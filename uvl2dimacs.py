@@ -10,7 +10,7 @@ from nns4fms.utils import utils
 def main_model(fm_path: str) -> None:
     # Get feature model name
     path, filename = os.path.split(fm_path)
-    filename = ''.join(filename.split('.')[:-1])
+    filename = '.'.join(filename.split('.')[:-1])
 
     # Read feature model
     print(f'Reading feature model {filename}...')

@@ -1,0 +1,60 @@
+import itertools
+
+from flamapy.core.models.ast import AST, ASTOperation, Node
+from flamapy.metamodels.fm_metamodel.models import FeatureModel, Constraint
+
+from language_constructs.models import LanguageConstruct 
+from language_constructs.utils import utils
+
+
+class ExcludesConstraint(LanguageConstruct):
+
+    def __init__(self, left_feature_name: str, right_feature_name: str) -> None:
+        self.left_feature_name = left_feature_name
+        self.right_feature_name = right_feature_name
+        self.constraint = None
+
+    @staticmethod
+    def name() -> str:
+        return 'Excludes constraint'
+
+    @staticmethod
+    def count(fm: FeatureModel) -> int:
+        return len(fm.get_constraints())
+
+    def get(self) -> Constraint:
+        return self.constraint
+
+    def apply(self, fm: FeatureModel) -> FeatureModel:
+        ast = AST.create_binary_operation(ASTOperation.EXCLUDES, 
+                                          Node(self.left_feature_name), 
+                                          Node(self.right_feature_name))
+        self.constraint = Constraint(f'{self.left_feature_name} => ! {self.right_feature_name}', ast)
+        fm.get_constraints().append(self.constraint)
+        return fm
+
+    def is_applicable(self, fm: FeatureModel) -> bool:
+        if fm is None:
+            return False
+        left_feature = fm.get_feature_by_name(self.left_feature_name)
+        right_feature = fm.get_feature_by_name(self.right_feature_name)
+        if left_feature is None or right_feature is not None:
+            return False
+        return not any(ctc.is_excludes_constraint() and 
+                       utils.left_right_features_from_simple_constraint(ctc) == (self.left_feature_name, self.right_feature_name) 
+                       for ctc in fm.get_constraints())
+
+    @staticmethod
+    def get_applicable_instances(fm: FeatureModel, features_names: list[str]) -> list['LanguageConstruct']:
+        if fm is None:
+            return []
+        lcs = []
+        features_combinations = itertools.combinations(features_names, 2)
+        for left_feature_name, right_feature_name in features_combinations:
+            lc = ExcludesConstraint(left_feature_name, right_feature_name)
+            if lc.is_applicable(fm):
+                lcs.append(lc)
+            lc = ExcludesConstraint(right_feature_name, left_feature_name)
+            if lc.is_applicable(fm):
+                lcs.append(lc)
+        return lcs

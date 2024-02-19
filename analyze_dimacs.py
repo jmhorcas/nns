@@ -34,7 +34,7 @@ def main_dir(dir: str) -> None:
     for model_path in utils.get_filepaths(dir, ['.dimacs']):
         # Get feature model name
         path, filename = os.path.split(model_path)
-        filename = ''.join(filename.split('.')[:-1])
+        filename = '.'.join(filename.split('.')[:-1])
 
         n_variables, n_clauses, max_terms_in_clause = get_dimacs_stats(model_path)
         n_variables_dict[filename] = n_variables

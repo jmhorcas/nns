@@ -5,6 +5,9 @@ import tensorflow
 import numpy
 from matplotlib import pyplot
 
+from nns4fms.models import FMInputCodification
+from nns4fms.utils import utils
+
 
 logger = tensorflow.get_logger()
 logger.setLevel(logging.ERROR)
@@ -30,51 +33,52 @@ OPTIMIZER_FUNCTION = tensorflow.keras.optimizers.Adam(LEARNING_RATE)
 EPOCHS = 500
 
 
-def create_nn_model() -> Any:
-    """Create a neural network model."""
-    # Build the layers
-    l0 = tensorflow.keras.layers.Dense(units=L0_N_NEURONS, input_shape=[1]) 
-
-    # Assemble layers into the model
-    model = tensorflow.keras.Sequential([l0])
-
-    # Compile the model, with loss and optimizer functions
-    model.compile(loss=LOSS_FUNCTION, optimizer=OPTIMIZER_FUNCTION)
-
-    return model
-
-
-def train_nn_model(model: Any, 
-                   input: numpy.ndarray[Any], 
-                   output: numpy.ndarray[Any]) -> Any:
-    """Train the neural network model and returns a history object."""
-    history = model.fit(input, output, epochs=EPOCHS, verbose=False)
-    return history
-
-
-def display_training_statistis(history: Any) -> None:
-    pyplot.xlabel('Epoch Number')
-    pyplot.ylabel("Loss Magnitude")
-    pyplot.plot(history.history['loss'])
-
-
-def predict_value(model: Any, input: numpy.ndarray[Any]) -> numpy.ndarray[Any]:
-    return model.predict(input)
+INPUT_DIR = 'fm_models/dimacs'
+MAX_VARIABLE = 44079
+MAX_CLAUSES = 100627
+MAX_TERMS = 27
 
 
 def main():
-    # Examples: A pair of inputs/outputs used during training. 
-    celsius_q    = numpy.array([-40, -10,  0,  8, 15, 22,  38],  dtype=float)
-    fahrenheit_a = numpy.array([-40,  14, 32, 46, 59, 72, 100],  dtype=float)
+    # Examples: A pair of inputs/outputs used during training.
+    dataset = [FMInputCodification(path) for path in utils.get_filepaths(INPUT_DIR, ['.dimacs'])]
+    #max_terms = max(fm.max_clauses() for fm in dataset)
+    #max_variables = max(fm.max_variable() for fm in dataset)
+    #max_clauses = max(len(fm.clauses) for fm in dataset)
+    inputs = []
+    outputs = []
+    for model in dataset:
+        inputs.append(model.get_codification(MAX_TERMS, MAX_CLAUSES))
+        outputs.append(model.get_configurations_number())
+        
 
-    for i,c in enumerate(celsius_q):
-        print("{} degrees Celsius = {} degrees Fahrenheit".format(c, fahrenheit_a[i]))
+    nn_inputs = numpy.array(inputs, dtype=int)
+    nn_outputs = numpy.array(outputs, dtype=int)
 
-    nn_model = create_nn_model()
-    history = train_nn_model(nn_model, celsius_q, fahrenheit_a)
-    display_training_statistis(history)
-    result = predict_value(nn_model, [100.0])
-    print(result)
+    # Build the layers
+    input_layer = tensorflow.keras.layers.Flatten(input_shape=(MAX_CLAUSES, MAX_TERMS, 1)) 
+    hidden_layer = tensorflow.keras.layers.Dense(units=128, activation=tensorflow.nn.relu)
+    output_layer = tensorflow.keras.layers.Dense(units=1, activation=tensorflow.nn.softmax)
+
+    # Assemble layers into the model
+    model = tensorflow.keras.Sequential([input_layer, hidden_layer, output_layer])
+
+    # Compile the model, with loss and optimizer functions
+    model.compile(optimizer=tensorflow.keras.optimizers.Adam(LEARNING_RATE),
+                  loss=tensorflow.keras.losses.SparseCategoricalCrossentropy(),
+                  metrics=['accuracy'])
+
+    # Train the model
+    history = model.fit(nn_inputs, nn_outputs, epochs=EPOCHS, verbose=False)
+
+    # Display training statistical
+    pyplot.xlabel('Epoch Number')
+    pyplot.ylabel("Loss Magnitude")
+    pyplot.plot(history.history['loss'])
+    
+    # Predict value
+    result = model.predict(input)
+    print(f'Result: {result}')
 
 
 if __name__ == '__main__':
