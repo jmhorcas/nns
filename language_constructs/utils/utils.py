@@ -54,3 +54,32 @@ def left_right_features_from_simple_constraint(simple_ctc: Constraint) -> tuple[
             left = root_op.right.left.data
             right = root_op.left.data
     return (left, right)
+
+
+def is_requires_constraint(constraint: Constraint) -> bool:
+    """Return true if the constraint is a requires constraint."""
+    root_op = constraint.ast.root
+    if root_op.is_binary_op():
+        if root_op.data in [ASTOperation.REQUIRES, ASTOperation.IMPLIES]:
+            return root_op.left.is_term() and root_op.right.is_term()
+        elif root_op.data == ASTOperation.OR:
+            neg_left = root_op.left.data == ASTOperation.NOT and root_op.left.left.is_term()
+            neg_right = root_op.right.data == ASTOperation.NOT and root_op.right.left.is_term()
+            return neg_left and root_op.right.is_term() or neg_right and root_op.left.is_term()
+    return False
+
+
+def is_excludes_constraint(constraint: Constraint) -> bool:
+    """Return true if the constraint is an excludes constraint."""
+    root_op = constraint.ast.root
+    if root_op.is_binary_op():
+        if root_op.data in [ASTOperation.EXCLUDES, ASTOperation.XOR]:
+            return root_op.left.is_term() and root_op.right.is_term()
+        elif root_op.data in [ASTOperation.REQUIRES, ASTOperation.IMPLIES]:
+            neg_right = root_op.right.data == ASTOperation.NOT and root_op.right.left.is_term()
+            return root_op.left.is_term() and neg_right
+        elif root_op.data == ASTOperation.OR:
+            neg_left = root_op.left.data == ASTOperation.NOT and root_op.left.left.is_term()
+            neg_right = root_op.right.data == ASTOperation.NOT and root_op.right.left.is_term()
+            return neg_left and neg_right
+    return False

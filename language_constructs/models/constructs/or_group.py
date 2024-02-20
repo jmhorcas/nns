@@ -1,3 +1,4 @@
+import random
 import itertools
 
 from flamapy.metamodels.fm_metamodel.models import FeatureModel, Feature, Relation
@@ -54,3 +55,24 @@ class OrGroup(LanguageConstruct):
                 if lc.is_applicable(fm):
                     lcs.append(lc)
         return lcs
+
+    @staticmethod
+    def get_random_applicable_instance(fm: FeatureModel, features_names: list[str]) -> 'LanguageConstruct':
+        if len(features_names) < 2:
+            return None
+        else:
+            feature_combinations = list(itertools.combinations(features_names, 2))
+            features = [f.name for f in fm.get_features() if not f.get_relations()]
+            if not features:
+                return None
+            parent = random.choice(features)
+            child1, child2 = random.choice(feature_combinations)
+            instance = OrGroup(parent, child1, child2)
+            while not instance.is_applicable(fm):
+                parent = random.choice(features)
+                child1, child2 = random.choice(feature_combinations)
+                instance = OrGroup(parent, child1, child2)
+            return instance
+        
+    def get_features(self) -> list[str]:
+        return [self.child1_name, self.child2_name]

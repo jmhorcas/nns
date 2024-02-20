@@ -1,3 +1,5 @@
+import random 
+
 from flamapy.metamodels.fm_metamodel.models import FeatureModel, Feature, Relation
 
 from language_constructs.models import LanguageConstruct 
@@ -51,3 +53,23 @@ class XorChildFeature(LanguageConstruct):
                 if lc.is_applicable(fm):
                     lcs.append(lc)
         return lcs
+
+    @staticmethod
+    def get_random_applicable_instance(fm: FeatureModel, features_names: list[str]) -> 'LanguageConstruct':
+        if not features_names:
+            return None
+        else:
+            features = [f.name for f in fm.get_features() if f.is_alternative_group()]
+            if not features:
+                return None
+            parent = random.choice(features)
+            random_feature = random.choice(features_names)
+            instance = XorChildFeature(random_feature, parent)
+            while not instance.is_applicable(fm):
+                parent = random.choice(features)
+                random_feature = random.choice(features_names)
+                instance = XorChildFeature(random_feature, parent)
+            return instance
+    
+    def get_features(self) -> list[str]:
+        return [self.child_name]

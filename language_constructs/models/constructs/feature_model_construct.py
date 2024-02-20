@@ -31,3 +31,12 @@ class FeatureModelConstruct(LanguageConstruct):
     def get_applicable_instances(fm: FeatureModel, features_names: list[str]) -> list['LanguageConstruct']:
         lc = FeatureModelConstruct()
         return [lc] if lc.is_applicable(fm) else []
+    
+    @staticmethod
+    def get_random_applicable_instance(fm: FeatureModel, features_names: list[str]) -> 'LanguageConstruct':
+        applicable_instances = FeatureModelConstruct.get_applicable_instances(fm, features_names)
+        return applicable_instances[0] if applicable_instances else None
+
+    def get_features(self) -> list[str]:
+        return []
+    

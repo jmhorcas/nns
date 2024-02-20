@@ -1,3 +1,4 @@
+import random
 import itertools
 
 from flamapy.core.models.ast import AST, ASTOperation, Node
@@ -40,7 +41,7 @@ class RequiresConstraint(LanguageConstruct):
         right_feature = fm.get_feature_by_name(self.right_feature_name)
         if left_feature is None or right_feature is None:
             return False
-        return not any(ctc.is_requires_constraint() and 
+        return not any(utils.is_requires_constraint(ctc) and 
                        utils.left_right_features_from_simple_constraint(ctc) == (self.left_feature_name, self.right_feature_name) 
                        for ctc in fm.get_constraints())
 
@@ -58,3 +59,25 @@ class RequiresConstraint(LanguageConstruct):
             if lc.is_applicable(fm):
                 lcs.append(lc)
         return lcs
+
+    @staticmethod
+    def get_random_applicable_instance(fm: FeatureModel, features_names: list[str]) -> 'LanguageConstruct':
+        if len(features_names) < 2:
+            return None
+        else:
+            feature_combinations = list(itertools.combinations(features_names, 2))
+            features = list(random.choice(feature_combinations))
+            random.shuffle(features)
+            left = features[0]
+            right = features[1]
+            instance = RequiresConstraint(left, right)
+            while not instance.is_applicable(fm):
+                features = list(random.choice(feature_combinations))
+                random.shuffle(features)
+                left = features[0]
+                right = features[1]
+                instance = RequiresConstraint(left, right)
+            return instance
+    
+    def get_features(self) -> list[str]:
+        return []

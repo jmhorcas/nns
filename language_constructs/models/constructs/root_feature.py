@@ -1,3 +1,5 @@
+import random 
+
 from flamapy.metamodels.fm_metamodel.models import FeatureModel, Feature
 
 from language_constructs.models import LanguageConstruct 
@@ -6,7 +8,7 @@ from language_constructs.models import LanguageConstruct
 class RootFeature(LanguageConstruct):
 
     def __init__(self, name: str) -> None:
-        self.name = name
+        self._name = name
         self.root = None
 
     @staticmethod
@@ -21,7 +23,7 @@ class RootFeature(LanguageConstruct):
         return self.root
 
     def apply(self, fm: FeatureModel) -> FeatureModel:
-        self.feature = Feature(name=self.name)
+        self.feature = Feature(name=self._name)
         fm.root = self.feature
         return fm
 
@@ -36,3 +38,10 @@ class RootFeature(LanguageConstruct):
             if lc.is_applicable(fm):
                 lcs.append(lc)
         return lcs
+
+    @staticmethod
+    def get_random_applicable_instance(fm: FeatureModel, features_names: list[str]) -> 'LanguageConstruct':
+        return RootFeature(random.choice(features_names)) if features_names else None
+
+    def get_features(self) -> list[str]:
+        return [self._name]

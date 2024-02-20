@@ -1,6 +1,7 @@
 import os
 import copy
 import queue
+import random
 
 from flamapy.metamodels.fm_metamodel.models import FeatureModel
 from flamapy.metamodels.fm_metamodel.transformations import UVLWriter
@@ -58,3 +59,40 @@ class FMLanguage():
                     new_fm = copy.deepcopy(fm)
                     incomplete_feature_models.put(alc.apply(new_fm))
         return count
+    
+    def generate_random_feature_model(self, features_names: list[str],
+                                      n_constraints: int) -> FeatureModel:
+        features_names = copy.deepcopy(features_names)
+        original_features_names = copy.deepcopy(features_names)
+        n_features = len(features_names)
+        fm = None
+        fm = self.lcs[0].get_random_applicable_instance(fm, features_names).apply(fm)
+        fm = self.lcs[1].get_random_applicable_instance(fm, features_names).apply(fm)
+        features_names.remove(fm.root.name)
+        count = 1
+        print(f'Features: ', flush=True, end='')
+        language_constructs = self.lcs[2:]
+        while count < n_features:
+            random_lc = random.choice(language_constructs)
+            random_applicable_instance = random_lc.get_random_applicable_instance(fm, features_names)
+            if random_applicable_instance is not None:
+                fm = random_applicable_instance.apply(fm)
+                features_added = random_applicable_instance.get_features()
+                for f in features_added:
+                    features_names.remove(f)
+                count += len(features_added)
+                print(f'{count} ', flush=True, end='')
+        fm = self.add_random_constraints(fm, original_features_names, n_constraints)
+        return fm
+
+    def add_random_constraints(self, fm: FeatureModel, features_names: list[str], n_constraints: int) -> FeatureModel:
+        count = 0
+        print(f'Constraints: ', flush=True, end='')
+        while count < n_constraints:
+            random_lc = random.choice(self.optional_lcs)
+            random_applicable_instance = random_lc.get_random_applicable_instance(fm, features_names)
+            if random_applicable_instance is not None:
+                fm = random_applicable_instance.apply(fm)
+                count = len(fm.get_constraints())
+                print(f'{count} ', flush=True, end='')
+        return fm

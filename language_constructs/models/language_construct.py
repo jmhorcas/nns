@@ -38,3 +38,14 @@ class LanguageConstruct(ABC):
     def get_applicable_instances(fm: FeatureModel, features_names: list[str]) -> list['LanguageConstruct']:
         """Return a list of all possible instances of this language construct applicable to the given feature model using the given features."""
         pass
+
+    @staticmethod
+    @abstractmethod
+    def get_random_applicable_instance(fm: FeatureModel, features_names: list[str]) -> 'LanguageConstruct':
+        """Return a random applicable instance to the given feature model using the given features."""
+        pass
+
+    @abstractmethod
+    def get_features(self) -> list[str]:
+        """Return the list of features this language construct uses."""
+        pass
