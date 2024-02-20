@@ -18,18 +18,31 @@ from language_constructs.models.constructs import (
 )
 
 
-MAX_FEATURES = 1
+N_MODELS = 10
+N_FEATURES = 1000
+N_CONSTRAINTS = 100
 OUTPUT_FOLDER = 'generated'
 
 
-if __name__ == "__main__":
-    if not os.path.exists(OUTPUT_FOLDER):
-        os.makedirs(OUTPUT_FOLDER)
-
-    features_names = [f'F{i}' for i in range(1, MAX_FEATURES + 1)]
+def generate_random_models(n_models: int, n_features: int, n_constraints: int) -> None:
+    features_names = [f'F{i}' for i in range(1, n_features + 1)]
     language_constructs = [FeatureModelConstruct, RootFeature, OptionalFeature, MandatoryFeature, XorGroup, OrGroup, XorChildFeature, OrChildFeature]
     optional_language_constructs = [RequiresConstraint, ExcludesConstraint]
-    #optional_language_constructs = []
+    language = FMLanguage(language_constructs, optional_language_constructs)
+    for i in range(n_models):
+        print(f'Generating model {i}...')
+        fm = language.generate_random_feature_model(features_names, n_constraints)
+        print(f'FM{i}: {fm}')
+        output_file = os.path.join(OUTPUT_FOLDER, f'fm{i}_{len(fm.get_features())}f_{len(fm.get_constraints())}c.uvl')
+        UVLWriter(fm, output_file).transform()
+    print(f'#Total models generated: {n_models}')
+
+
+def calc_expressiveness() -> None:
+    features_names = [f'F{i}' for i in range(1, N_FEATURES + 1)]
+    language_constructs = [FeatureModelConstruct, RootFeature, OptionalFeature, MandatoryFeature, XorGroup, OrGroup, XorChildFeature, OrChildFeature]
+    #optional_language_constructs = [RequiresConstraint, ExcludesConstraint]
+    optional_language_constructs = []
     language = FMLanguage(language_constructs, optional_language_constructs)
     #fms = language.generate_feature_models(features_names)
     # for i, fm in enumerate(fms, 1):
@@ -51,3 +64,10 @@ if __name__ == "__main__":
     # for i, p in enumerate(pps, 1):
     #     print(f'SPL {i}: {p}')
     #print(f'#SPLs: {len(pps)}')
+
+
+if __name__ == "__main__":
+    if not os.path.exists(OUTPUT_FOLDER):
+        os.makedirs(OUTPUT_FOLDER)
+
+    generate_random_models(N_MODELS, N_FEATURES, N_CONSTRAINTS)

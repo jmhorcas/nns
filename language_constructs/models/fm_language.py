@@ -70,7 +70,7 @@ class FMLanguage():
         fm = self.lcs[1].get_random_applicable_instance(fm, features_names).apply(fm)
         features_names.remove(fm.root.name)
         count = 1
-        print(f'Features: ', flush=True, end='')
+        print(f'  |-generating features... ', flush=True, end='')
         language_constructs = self.lcs[2:]
         while count < n_features:
             random_lc = random.choice(language_constructs)
@@ -82,12 +82,13 @@ class FMLanguage():
                     features_names.remove(f)
                 count += len(features_added)
                 print(f'{count} ', flush=True, end='')
+        print()
         fm = self.add_random_constraints(fm, original_features_names, n_constraints)
         return fm
 
     def add_random_constraints(self, fm: FeatureModel, features_names: list[str], n_constraints: int) -> FeatureModel:
         count = 0
-        print(f'Constraints: ', flush=True, end='')
+        print(f'  |generating constraints... ', flush=True, end='')
         while count < n_constraints:
             random_lc = random.choice(self.optional_lcs)
             random_applicable_instance = random_lc.get_random_applicable_instance(fm, features_names)
@@ -95,4 +96,5 @@ class FMLanguage():
                 fm = random_applicable_instance.apply(fm)
                 count = len(fm.get_constraints())
                 print(f'{count} ', flush=True, end='')
+        print()
         return fm
