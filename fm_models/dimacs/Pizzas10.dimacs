@@ -1,0 +1,30 @@
+c 1 Pizza
+c 2 Topping
+c 3 Salami
+c 4 Mozzarella
+c 5 Size
+c 6 Normal
+c 7 Big
+c 8 Dough
+c 9 Neapolitan
+c 10 Sicilian
+p cnf 10 19
+1 0
+1 -2 0
+1 -5 0
+-8 1 0
+-1 2 0
+-1 5 0
+8 -1 0
+-3 2 0
+-4 2 0
+4 3 -2 0
+-6 5 0
+-7 5 0
+7 6 -5 0
+-7 -6 0
+8 -9 0
+8 -10 0
+-8 9 10 0
+-9 -10 0
+7 -3 0

@@ -30,54 +30,65 @@ LEARNING_RATE = 0.1
 OPTIMIZER_FUNCTION = tensorflow.keras.optimizers.Adam(LEARNING_RATE)  
 
 """Epochs: How many times the cycle of calculate, compare, and adjust is run by the fit method."""
-EPOCHS = 500
+EPOCHS = 100
 
 
-INPUT_DIR = 'fm_models/dimacs'
-MAX_VARIABLE = 44079
-MAX_CLAUSES = 100627
-MAX_TERMS = 27
+INPUT_DIR = 'generated/'
+FM_TO_PREDICT = 'fm_models/dimacs/Pizzas.dimacs'
+MAX_VARIABLE = 15  # 44079
+MAX_CLAUSES = 35  # 100627
+MAX_TERMS = 8  # 27
 
 
 def main():
     # Examples: A pair of inputs/outputs used during training.
+    print(f'Getting dataset from {INPUT_DIR}')
     dataset = [FMInputCodification(path) for path in utils.get_filepaths(INPUT_DIR, ['.dimacs'])]
     #max_terms = max(fm.max_clauses() for fm in dataset)
     #max_variables = max(fm.max_variable() for fm in dataset)
     #max_clauses = max(len(fm.clauses) for fm in dataset)
+    print(f'Codifying inputs/outputs...')
     inputs = []
     outputs = []
     for model in dataset:
         inputs.append(model.get_codification(MAX_TERMS, MAX_CLAUSES))
         outputs.append(model.get_configurations_number())
         
-
     nn_inputs = numpy.array(inputs, dtype=int)
     nn_outputs = numpy.array(outputs, dtype=int)
+    print(f'Outputs: {nn_outputs}')
 
     # Build the layers
+    print(f'Building the layers...')
     input_layer = tensorflow.keras.layers.Flatten(input_shape=(MAX_CLAUSES, MAX_TERMS, 1)) 
     hidden_layer = tensorflow.keras.layers.Dense(units=128, activation=tensorflow.nn.relu)
-    output_layer = tensorflow.keras.layers.Dense(units=1, activation=tensorflow.nn.softmax)
+    output_layer = tensorflow.keras.layers.Dense(units=1, activation=tensorflow.nn.relu)
 
     # Assemble layers into the model
+    print(f'Assembling the layers...')
     model = tensorflow.keras.Sequential([input_layer, hidden_layer, output_layer])
 
     # Compile the model, with loss and optimizer functions
+    print(f'Compiling the model...')
     model.compile(optimizer=tensorflow.keras.optimizers.Adam(LEARNING_RATE),
-                  loss=tensorflow.keras.losses.SparseCategoricalCrossentropy(),
+                  loss='binary_crossentropy',
                   metrics=['accuracy'])
 
     # Train the model
+    print(f'Training the model...')
     history = model.fit(nn_inputs, nn_outputs, epochs=EPOCHS, verbose=False)
 
     # Display training statistical
+    print(f'Displaying training statistical...')
     pyplot.xlabel('Epoch Number')
     pyplot.ylabel("Loss Magnitude")
     pyplot.plot(history.history['loss'])
     
     # Predict value
-    result = model.predict(input)
+    print(f'Predicting value for {FM_TO_PREDICT}...')
+    fm_to_predict = FMInputCodification(FM_TO_PREDICT)
+    nn_input = numpy.array([fm_to_predict.get_codification(MAX_TERMS, MAX_CLAUSES)], dtype=int)
+    result = model.predict(nn_input)
     print(f'Result: {result}')
 
 
