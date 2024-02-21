@@ -1,6 +1,8 @@
 import os
 import argparse
 
+from alive_progress import alive_bar
+
 from flamapy.metamodels.fm_metamodel.transformations import UVLWriter
 from flamapy.metamodels.pysat_metamodel.transformations import FmToPysat, DimacsWriter
 
@@ -33,16 +35,20 @@ def generate_random_models(n_models: int, n_features: int, n_constraints: int, i
     language_constructs = [FeatureModelConstruct, RootFeature, OptionalFeature, MandatoryFeature, XorGroup, OrGroup, XorChildFeature, OrChildFeature]
     optional_language_constructs = [RequiresConstraint, ExcludesConstraint]
     language = FMLanguage(language_constructs, optional_language_constructs)
-    for i in range(n_models):
-        print(f'Generating model {i}...')
-        fm = language.generate_random_feature_model(features_names, n_constraints)
-        print(f'FM{i}: {fm}')
-        output_file = os.path.join(OUTPUT_FOLDER, f'fm{i}_{len(fm.get_features())}f_{len(fm.get_constraints())}c.uvl')
-        UVLWriter(fm, output_file).transform()
-        if in_dimacs:
-            output_file = os.path.join(OUTPUT_FOLDER, f'fm{i}_{len(fm.get_features())}f_{len(fm.get_constraints())}c.dimacs')
-            sat_model = FmToPysat(fm).transform()
-            DimacsWriter(output_file, sat_model).transform()
+    with alive_bar(n_models) as bar:
+        bar.title('Generating random feature models...')
+        for i in range(n_models):
+            #bar.text('Generating random feature models...')
+            #print(f'Generating model {i}...')
+            fm = language.generate_random_feature_model(features_names, n_constraints)
+            #print(f'FM{i}: {fm}')
+            output_file = os.path.join(OUTPUT_FOLDER, f'fm{i}_{len(fm.get_features())}f_{len(fm.get_constraints())}c.uvl')
+            UVLWriter(fm, output_file).transform()
+            if in_dimacs:
+                output_file = os.path.join(OUTPUT_FOLDER, f'fm{i}_{len(fm.get_features())}f_{len(fm.get_constraints())}c.dimacs')
+                sat_model = FmToPysat(fm).transform()
+                DimacsWriter(output_file, sat_model).transform()
+            bar()
     print(f'#Total models generated: {n_models}')
 
 

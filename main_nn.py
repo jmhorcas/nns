@@ -1,6 +1,8 @@
 import logging
 from typing import Any
 
+from alive_progress import alive_bar
+
 import tensorflow
 import numpy
 from matplotlib import pyplot
@@ -47,12 +49,14 @@ def main():
     #max_terms = max(fm.max_clauses() for fm in dataset)
     #max_variables = max(fm.max_variable() for fm in dataset)
     #max_clauses = max(len(fm.clauses) for fm in dataset)
-    print(f'Codifying inputs/outputs...')
     inputs = []
     outputs = []
-    for model in dataset:
-        inputs.append(model.get_codification(MAX_TERMS, MAX_CLAUSES))
-        outputs.append(model.get_configurations_number())
+    with alive_bar(dataset) as bar:
+        bar.title('Codifying inputs/outputs...')
+        for model in dataset:
+            inputs.append(model.get_codification(MAX_TERMS, MAX_CLAUSES))
+            outputs.append(model.get_configurations_number())
+            bar()
         
     nn_inputs = numpy.array(inputs, dtype=int)
     nn_outputs = numpy.array(outputs, dtype=int)
