@@ -1,7 +1,7 @@
 import logging
 from typing import Any
 
-from alive_progress import alive_bar
+from alive_progress import alive_bar, alive_it
 
 import tensorflow
 import numpy
@@ -37,21 +37,22 @@ EPOCHS = 100
 
 INPUT_DIR = 'generated/'
 FM_TO_PREDICT = 'fm_models/dimacs/Pizzas.dimacs'
-MAX_VARIABLE = 15  # 44079
-MAX_CLAUSES = 35  # 100627
-MAX_TERMS = 8  # 27
+MAX_VARIABLE = 12  # 44079
+MAX_CLAUSES = 51  # 100627
+MAX_TERMS = 10  # 27
 
 
 def main():
     # Examples: A pair of inputs/outputs used during training.
-    print(f'Getting dataset from {INPUT_DIR}')
-    dataset = [FMInputCodification(path) for path in utils.get_filepaths(INPUT_DIR, ['.dimacs'])]
+    dataset = [FMInputCodification(path) for path in 
+               alive_it(utils.get_filepaths(INPUT_DIR, ['.dimacs'])[:50000], 
+                        title=f'Getting dataset from {INPUT_DIR}...')]
     #max_terms = max(fm.max_clauses() for fm in dataset)
     #max_variables = max(fm.max_variable() for fm in dataset)
     #max_clauses = max(len(fm.clauses) for fm in dataset)
     inputs = []
     outputs = []
-    with alive_bar(dataset) as bar:
+    with alive_bar(len(dataset)) as bar:
         bar.title('Codifying inputs/outputs...')
         for model in dataset:
             inputs.append(model.get_codification(MAX_TERMS, MAX_CLAUSES))
@@ -60,22 +61,24 @@ def main():
         
     nn_inputs = numpy.array(inputs, dtype=int)
     nn_outputs = numpy.array(outputs, dtype=int)
+    print(f'Inputs: {nn_inputs}')
     print(f'Outputs: {nn_outputs}')
-
-    # Build the layers
-    print(f'Building the layers...')
-    input_layer = tensorflow.keras.layers.Flatten(input_shape=(MAX_CLAUSES, MAX_TERMS, 1)) 
-    hidden_layer = tensorflow.keras.layers.Dense(units=128, activation=tensorflow.nn.relu)
-    output_layer = tensorflow.keras.layers.Dense(units=1, activation=tensorflow.nn.relu)
+    print(nn_inputs[0])
 
     # Assemble layers into the model
     print(f'Assembling the layers...')
-    model = tensorflow.keras.Sequential([input_layer, hidden_layer, output_layer])
+    model = tensorflow.keras.Sequential([
+        tensorflow.keras.layers.Flatten(input_shape=(MAX_CLAUSES, MAX_TERMS, 1)),
+        tensorflow.keras.layers.Dense(units=51, activation=tensorflow.nn.relu),
+        tensorflow.keras.layers.Dense(units=10, activation=tensorflow.nn.sigmoid),
+        #tensorflow.keras.layers.Dense(units=12, activation=tensorflow.nn.relu),
+        tensorflow.keras.layers.Dense(units=1)
+    ])
 
     # Compile the model, with loss and optimizer functions
     print(f'Compiling the model...')
     model.compile(optimizer=tensorflow.keras.optimizers.Adam(LEARNING_RATE),
-                  loss='binary_crossentropy',
+                  loss='mean_squared_error',
                   metrics=['accuracy'])
 
     # Train the model
@@ -87,7 +90,12 @@ def main():
     pyplot.xlabel('Epoch Number')
     pyplot.ylabel("Loss Magnitude")
     pyplot.plot(history.history['loss'])
-    
+    pyplot.show()
+
+    # evaluate the keras model
+    _, accuracy = model.evaluate(nn_inputs, nn_outputs)
+    print('Accuracy: %.2f' % (accuracy*100))
+
     # Predict value
     print(f'Predicting value for {FM_TO_PREDICT}...')
     fm_to_predict = FMInputCodification(FM_TO_PREDICT)

@@ -14,7 +14,7 @@ def get_dimacs_stats(model_path: str) -> tuple[Any, Any, Any]:
     # Get stats
     clauses = sat_model.get_all_clauses().clauses
     n_clauses = len(clauses)
-    max_terms_in_clause = max(len(c) for c in clauses)
+    max_terms_in_clause = len(max(clauses, key=len))
     n_variables = len(sat_model.variables) 
 
     return n_variables, n_clauses, max_terms_in_clause

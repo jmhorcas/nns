@@ -31,6 +31,9 @@ def generate_random_models(n_models: int, n_features: int, n_constraints: int, i
     if not os.path.exists(OUTPUT_FOLDER):
         os.makedirs(OUTPUT_FOLDER)
 
+    max_variables = 0
+    max_clauses = 0
+    max_terms_in_clauses = 0
     features_names = [f'F{i}' for i in range(1, n_features + 1)]
     language_constructs = [FeatureModelConstruct, RootFeature, OptionalFeature, MandatoryFeature, XorGroup, OrGroup, XorChildFeature, OrChildFeature]
     optional_language_constructs = [RequiresConstraint, ExcludesConstraint]
@@ -48,8 +51,15 @@ def generate_random_models(n_models: int, n_features: int, n_constraints: int, i
                 output_file = os.path.join(OUTPUT_FOLDER, f'fm{i}_{len(fm.get_features())}f_{len(fm.get_constraints())}c.dimacs')
                 sat_model = FmToPysat(fm).transform()
                 DimacsWriter(output_file, sat_model).transform()
+                max_variables = max(len(sat_model.features.keys()), max_variables)
+                max_clauses = max(len(sat_model.get_all_clauses().clauses), max_clauses)
+                max_terms_in_clauses = max(len(max(sat_model.get_all_clauses().clauses, key=len)), max_terms_in_clauses)
             bar()
     print(f'#Total models generated: {n_models}')
+    if in_dimacs:
+        print(f'Max variables: {max_variables}')
+        print(f'Max clauses: {max_clauses}')
+        print(f'Max terms in clauses: {max_terms_in_clauses}')
 
 
 if __name__ == "__main__":
