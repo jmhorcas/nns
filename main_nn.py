@@ -36,26 +36,29 @@ EPOCHS = 100
 
 
 INPUT_DIR = 'generated/'
-FM_TO_PREDICT = 'fm_models/dimacs/Pizzas.dimacs'
-MAX_VARIABLE = 12  # 44079
-MAX_CLAUSES = 51  # 100627
-MAX_TERMS = 10  # 27
+FM_TO_PREDICT = 'fm_models/dimacs/Pizzas.dimacs'  # output: 42
+#MAX_NUM_VARIABLES = 12  # 44079
+MAX_NUM_CLAUSES = 51  # 100627
+MAX_NUM_LITERALS = 12  # 27
 
 
 def main():
     # Examples: A pair of inputs/outputs used during training.
     dataset = [FMInputCodification(path) for path in 
-               alive_it(utils.get_filepaths(INPUT_DIR, ['.dimacs'])[:50000], 
+               alive_it(utils.get_filepaths(INPUT_DIR, ['.dimacs'])[:100], 
                         title=f'Getting dataset from {INPUT_DIR}...')]
-    #max_terms = max(fm.max_clauses() for fm in dataset)
-    #max_variables = max(fm.max_variable() for fm in dataset)
-    #max_clauses = max(len(fm.clauses) for fm in dataset)
+    max_num_literals = max(fm.max_clauses() for fm in dataset)
+    max_variables = max(fm.max_variable() for fm in dataset)
+    max_clauses = max(len(fm.clauses) for fm in dataset)
+    print(f'#Max num literals: {max_num_literals}')
+    print(f'#Max num variables: {max_variables}')
+    print(f'#Max num clauses: {max_clauses}')
     inputs = []
     outputs = []
     with alive_bar(len(dataset)) as bar:
         bar.title('Codifying inputs/outputs...')
         for model in dataset:
-            inputs.append(model.get_codification(MAX_TERMS, MAX_CLAUSES))
+            inputs.append(model.get_codification(MAX_NUM_LITERALS, MAX_NUM_CLAUSES))
             outputs.append(model.get_configurations_number())
             bar()
         
@@ -67,13 +70,32 @@ def main():
 
     # Assemble layers into the model
     print(f'Assembling the layers...')
+    # model = tensorflow.keras.Sequential([
+    #     tensorflow.keras.layers.Flatten(input_shape=(MAX_CLAUSES, MAX_TERMS, 1)),
+    #     tensorflow.keras.layers.Dense(units=51, activation=tensorflow.nn.relu),
+    #     tensorflow.keras.layers.Dense(units=10, activation=tensorflow.nn.sigmoid),
+    #     #tensorflow.keras.layers.Dense(units=12, activation=tensorflow.nn.relu),
+    #     tensorflow.keras.layers.Dense(units=1)
+    # ])
     model = tensorflow.keras.Sequential([
-        tensorflow.keras.layers.Flatten(input_shape=(MAX_CLAUSES, MAX_TERMS, 1)),
-        tensorflow.keras.layers.Dense(units=51, activation=tensorflow.nn.relu),
-        tensorflow.keras.layers.Dense(units=10, activation=tensorflow.nn.sigmoid),
-        #tensorflow.keras.layers.Dense(units=12, activation=tensorflow.nn.relu),
-        tensorflow.keras.layers.Dense(units=1)
+        tensorflow.keras.layers.Conv2D(16,kernel_size=(3, 3),padding='same', activation='relu', input_shape=(MAX_NUM_CLAUSES, MAX_NUM_LITERALS, 1)),
+        tensorflow.keras.layers.Conv2D(16,kernel_size=(3 ,3),padding='same', activation='relu'),
+        tensorflow.keras.layers.Conv2D(16,kernel_size=(3, 3),padding='same', activation='relu'),
+
+        tensorflow.keras.layers.Flatten(),
+
+        tensorflow.keras.layers.Dense(512,activation='relu'),
+        tensorflow.keras.layers.Dense(64,activation='relu'),
+        tensorflow.keras.layers.Dense(1)
     ])
+    # model = tensorflow.keras.Sequential([
+    #     #tensorflow.keras.layers.Flatten(input_shape=(MAX_NUM_CLAUSES, MAX_NUM_LITERALS, 1)),
+    #     tensorflow.keras.layers.Dense(128, activation='relu', input_shape=(MAX_NUM_CLAUSES, MAX_NUM_LITERALS)),
+    #     tensorflow.keras.layers.Dense(64, activation='relu'),
+    #     tensorflow.keras.layers.Dense(32, activation='relu'),
+    #     tensorflow.keras.layers.Dense(1)
+    # ])
+
 
     # Compile the model, with loss and optimizer functions
     print(f'Compiling the model...')
@@ -83,7 +105,7 @@ def main():
 
     # Train the model
     print(f'Training the model...')
-    history = model.fit(nn_inputs, nn_outputs, epochs=EPOCHS, verbose=False)
+    history = model.fit(nn_inputs, nn_outputs, epochs=EPOCHS, batch_size=1) # verbose=False)
 
     # Display training statistical
     print(f'Displaying training statistical...')
@@ -99,7 +121,7 @@ def main():
     # Predict value
     print(f'Predicting value for {FM_TO_PREDICT}...')
     fm_to_predict = FMInputCodification(FM_TO_PREDICT)
-    nn_input = numpy.array([fm_to_predict.get_codification(MAX_TERMS, MAX_CLAUSES)], dtype=int)
+    nn_input = numpy.array([fm_to_predict.get_codification(MAX_NUM_LITERALS, MAX_NUM_CLAUSES)], dtype=int)
     result = model.predict(nn_input)
     print(f'Result: {result}')
 

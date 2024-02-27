@@ -1,5 +1,7 @@
 import os
 
+import numpy
+
 from flamapy.metamodels.pysat_metamodel.transformations import DimacsReader
 
 from flamapy.metamodels.bdd_metamodel.transformations.sat_to_bdd import SATToBDD
@@ -27,12 +29,19 @@ class FMInputCodification():
         self.variables_features_dict = self._sat_model.features
         self.clauses = self._sat_model.get_all_clauses().clauses
     
-    def get_codification(self, max_terms_in_clause: int, max_clauses: int) -> list[list[int]]:
-        """Codify the clauses by augmenting the terms in clauses and the number of clauses 
-        to the given numbers."""
-        padding_clauses = [padding_clause(clause, max_terms_in_clause) for clause in self.clauses]
-        padding_clauses = padding_model(padding_clauses, max_clauses)
-        return padding_clauses
+    # def get_codification(self, max_terms_in_clause: int, max_clauses: int, shuffle: bool = False) -> list[list[int]]:
+    #     """Codify the clauses by augmenting the terms in clauses and the number of clauses 
+    #     to the given numbers."""
+    #     padding_clauses = [padding_clause(clause, max_terms_in_clause) for clause in self.clauses]
+    #     padding_clauses = padding_model(padding_clauses, max_clauses)
+    #     return padding_clauses
+
+    def get_codification(self, 
+                         max_num_literals: int, 
+                         max_num_clauses: int, 
+                         shuffle: bool = False) -> numpy.ndarray[int]:
+        """Codify the clauses in a binary matrix."""
+        return clauses_to_matrix(self.clauses, max_num_literals, max_num_clauses)
 
     def max_clauses(self) -> int:
         """Return the largest clause in the model."""
@@ -56,3 +65,17 @@ def padding_clause(clause: list[int], size: int) -> list[int]:
 def padding_model(clauses: list[list[int]], size: int) -> list[list[int]]:
     """Fill the list of clauses with new empty clauses until getting size clauses."""
     return clauses + [[0] * len(clauses[0])] * (size - len(clauses))
+
+
+def clauses_to_matrix(clauses: list[list[int]], 
+                      num_literals: int, 
+                      num_clauses: int) -> numpy.ndarray[int]:
+    """Convert clauses to a binary matrix representation."""
+    matrix = numpy.zeros((num_clauses, num_literals), dtype=int)
+    for i, clause in enumerate(clauses):
+        for literal in clause:
+            if literal > 0:
+                matrix[i][literal - 1] = 1
+            else:
+                matrix[i][-literal - 1] = -1
+    return matrix
