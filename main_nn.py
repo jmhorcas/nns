@@ -45,7 +45,7 @@ MAX_NUM_LITERALS = 12  # 27
 def main():
     # Examples: A pair of inputs/outputs used during training.
     dataset = [FMInputCodification(path) for path in 
-               alive_it(utils.get_filepaths(INPUT_DIR, ['.dimacs'])[:100], 
+               alive_it(utils.get_filepaths(INPUT_DIR, ['.dimacs'])[:10000], 
                         title=f'Getting dataset from {INPUT_DIR}...')]
     max_num_literals = max(fm.max_clauses() for fm in dataset)
     max_variables = max(fm.max_variable() for fm in dataset)
@@ -77,24 +77,26 @@ def main():
     #     #tensorflow.keras.layers.Dense(units=12, activation=tensorflow.nn.relu),
     #     tensorflow.keras.layers.Dense(units=1)
     # ])
-    model = tensorflow.keras.Sequential([
-        tensorflow.keras.layers.Conv2D(16,kernel_size=(3, 3),padding='same', activation='relu', input_shape=(MAX_NUM_CLAUSES, MAX_NUM_LITERALS, 1)),
-        tensorflow.keras.layers.Conv2D(16,kernel_size=(3 ,3),padding='same', activation='relu'),
-        tensorflow.keras.layers.Conv2D(16,kernel_size=(3, 3),padding='same', activation='relu'),
-
-        tensorflow.keras.layers.Flatten(),
-
-        tensorflow.keras.layers.Dense(512,activation='relu'),
-        tensorflow.keras.layers.Dense(64,activation='relu'),
-        tensorflow.keras.layers.Dense(1)
-    ])
     # model = tensorflow.keras.Sequential([
-    #     #tensorflow.keras.layers.Flatten(input_shape=(MAX_NUM_CLAUSES, MAX_NUM_LITERALS, 1)),
-    #     tensorflow.keras.layers.Dense(128, activation='relu', input_shape=(MAX_NUM_CLAUSES, MAX_NUM_LITERALS)),
-    #     tensorflow.keras.layers.Dense(64, activation='relu'),
-    #     tensorflow.keras.layers.Dense(32, activation='relu'),
+    #     tensorflow.keras.layers.Conv2D(16,kernel_size=(3, 3),padding='same', activation='relu', input_shape=(MAX_NUM_CLAUSES, MAX_NUM_LITERALS, 1)),
+    #     tensorflow.keras.layers.Conv2D(16,kernel_size=(3 ,3),padding='same', activation='relu'),
+    #     tensorflow.keras.layers.Conv2D(16,kernel_size=(3, 3),padding='same', activation='relu'),
+
+    #     tensorflow.keras.layers.Flatten(),
+
+    #     tensorflow.keras.layers.Dense(512,activation='relu'),
+    #     tensorflow.keras.layers.Dense(64,activation='relu'),
     #     tensorflow.keras.layers.Dense(1)
     # ])
+    model = tensorflow.keras.Sequential([
+        tensorflow.keras.layers.Flatten(input_shape=(MAX_NUM_CLAUSES, MAX_NUM_LITERALS, 1)),
+        #tensorflow.keras.layers.Dense(64, activation='relu', input_shape=(MAX_NUM_CLAUSES, MAX_NUM_LITERALS)),
+        tensorflow.keras.layers.Dense(12, activation='tanh'),
+        tensorflow.keras.layers.Dense(51, activation='tanh'),
+        #tensorflow.keras.layers.Dense(64, activation='relu'),
+        #tensorflow.keras.layers.Dense(32, activation='relu'),
+        tensorflow.keras.layers.Dense(1)
+    ])
 
 
     # Compile the model, with loss and optimizer functions
@@ -105,7 +107,7 @@ def main():
 
     # Train the model
     print(f'Training the model...')
-    history = model.fit(nn_inputs, nn_outputs, epochs=EPOCHS, batch_size=1) # verbose=False)
+    history = model.fit(nn_inputs, nn_outputs, epochs=EPOCHS) # verbose=False)
 
     # Display training statistical
     print(f'Displaying training statistical...')
@@ -116,7 +118,7 @@ def main():
 
     # evaluate the keras model
     _, accuracy = model.evaluate(nn_inputs, nn_outputs)
-    print('Accuracy: %.2f' % (accuracy*100))
+    # print('Accuracy: %.2f %' % (accuracy*100))
 
     # Predict value
     print(f'Predicting value for {FM_TO_PREDICT}...')
